@@ -177,7 +177,7 @@ export default async function handler(request: Request): Promise<Response> {
   const time = formatTime(new Date());
 
   const message = [
-    '• New Visitor',
+    '🟢 New Visitor',
     'Website: hopecharity-foundation',
     `Visitor ID: ${visitorId}`,
     `Time: ${time}`,
