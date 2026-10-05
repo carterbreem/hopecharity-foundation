@@ -219,7 +219,6 @@ export default function Apply() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback for older browsers
       const el = document.createElement('textarea');
       el.value = submittedRef;
       document.body.appendChild(el);
@@ -234,14 +233,12 @@ export default function Apply() {
   const handleSubmitToSupport = () => {
     if (!submittedRef) return;
     const message = `Hello, I would like to submit my application reference number for assistance: ${submittedRef}`;
-    // Open the chat widget
     const w = window as unknown as {
       smartsupp?: (...args: unknown[]) => void;
     };
     if (typeof w.smartsupp === 'function') {
       try {
         w.smartsupp('chat:open');
-        // Pre-fill the message (works on some Smartsupp plans)
         w.smartsupp('chat:message:send', message);
       } catch {
         // ignore
@@ -463,14 +460,12 @@ export default function Apply() {
 
               {/* Caption */}
               <p className="mt-2 text-center text-[11px] leading-snug text-neutral-600">
-                Tap the button above to send your reference number to our live
-                support team. They will locate your application and assist you
-                directly.
+                Copy and tap the button to send your reference number to our support team to locate and process your application.
               </p>
 
               {/* Reminder text */}
               <p className="mt-2 text-center text-[10px] leading-snug text-neutral-500">
-                Please copy or screenshot your reference number for your records.
+                Please copy or screenshot your reference number to track your application progress.
               </p>
             </div>
 
