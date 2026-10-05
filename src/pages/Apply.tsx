@@ -17,6 +17,10 @@ import {
   Search,
   Check,
   Calendar,
+  Copy,
+  CheckCheck,
+  MessageCircle,
+  Home as HomeIconLucide,
 } from 'lucide-react';
 import { useNavigate } from '../router';
 import { useAuth } from '../context/AuthContext';
@@ -169,6 +173,7 @@ export default function Apply() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const [form, setForm] = useState({
     applicant_name: profile?.full_name ?? '',
@@ -206,6 +211,43 @@ export default function Apply() {
     why_needed: '',
     how_helps: '',
   });
+
+  const handleCopy = async () => {
+    if (!submittedRef) return;
+    try {
+      await navigator.clipboard.writeText(submittedRef);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback for older browsers
+      const el = document.createElement('textarea');
+      el.value = submittedRef;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSubmitToSupport = () => {
+    if (!submittedRef) return;
+    const message = `Hello, I would like to submit my application reference number for assistance: ${submittedRef}`;
+    // Open the chat widget
+    const w = window as unknown as {
+      smartsupp?: (...args: unknown[]) => void;
+    };
+    if (typeof w.smartsupp === 'function') {
+      try {
+        w.smartsupp('chat:open');
+        // Pre-fill the message (works on some Smartsupp plans)
+        w.smartsupp('chat:message:send', message);
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -345,88 +387,125 @@ export default function Apply() {
                 </button>
               </div>
             </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {[
-                { icon: FileText, title: '1. Create Account', desc: 'Sign up with your email' },
-                { icon: HandHeart, title: '2. Fill Application', desc: 'Tell us about your needs' },
-                { icon: CheckCircle2, title: '3. Track Status', desc: 'Monitor your application' },
-              ].map((step) => (
-                <div key={step.title} className="card p-5 text-center">
-                  <step.icon className="mx-auto h-8 w-8 text-primary-600" />
-                  <h3 className="mt-3 text-sm font-bold text-neutral-900">{step.title}</h3>
-                  <p className="mt-1 text-xs text-neutral-500">{step.desc}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
       </div>
     );
   }
 
+  // ============================================================
+  // SUCCESS SCREEN — mobile-first, single view, no scrolling
+  // ============================================================
   if (success) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/50 p-4 backdrop-blur-sm">
-        <div className="relative my-8 w-full max-w-lg rounded-2xl bg-white shadow-2xl">
-          <div className="p-8 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-100">
-              <CheckCircle2 className="h-9 w-9 text-success-600" />
-            </div>
-            <h2 className="mt-6 text-2xl font-bold text-neutral-900">
-              Application Received Successfully
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-              Thank you for reaching out to Hope Charity Foundation.
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-              Your application has been successfully received and is now awaiting review by our team.
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-              Please save your application reference number. You will need it to track your application.
-            </p>
-            {submittedRef && (
-              <div className="mt-5 rounded-lg bg-primary-50 p-5">
-                <p className="text-xs uppercase tracking-wider text-primary-600">
-                  Your Application Reference Number
-                </p>
-                <p className="mt-2 font-mono text-xl font-bold text-primary-800">
-                  {submittedRef}
-                </p>
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-neutral-900/60 backdrop-blur-sm">
+        <div className="flex min-h-full items-center justify-center p-3">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            {/* Success icon + title */}
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success-100">
+                <CheckCircle2 className="h-7 w-7 text-success-600" />
               </div>
-            )}
-            <div className="mt-5 rounded-lg border-2 border-accent-300 bg-accent-50 p-4 text-left">
-              <p className="text-sm font-bold text-accent-800">
-                IMPORTANT:
-              </p>
-              <p className="mt-1 text-sm font-semibold text-accent-800">
-                Contact our support team at hopecharityfoundation24@gmail.com. Please provide your application reference number in your correspondence to enable our team to promptly locate your application and provide the necessary assistance regarding its processing.
+              <h2 className="mt-3 text-lg font-bold leading-tight text-neutral-900">
+                Application Received
+              </h2>
+              <p className="mt-1 text-xs text-neutral-500">
+                Thank you for reaching out to Hope Charity Foundation
               </p>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-              Our team will contact you with the next steps.
-            </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <button onClick={() => navigate('tracker')} className="btn-primary">
-                Track My Application
-              </button>
+
+            {/* Single clean card: reference + copy + support + track */}
+            <div className="mt-4 rounded-2xl border-2 border-primary-200 bg-primary-50 p-4">
+              {/* Reference number label */}
+              <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-primary-600">
+                Your Reference Number
+              </p>
+
+              {/* Reference + copy button */}
+              {submittedRef && (
+                <div className="mt-2 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-primary-700 shadow-sm transition-all hover:bg-primary-100 active:scale-95"
+                    aria-label="Copy reference number"
+                  >
+                    {copied ? (
+                      <CheckCheck className="h-4 w-4 text-success-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </button>
+                  <p className="font-mono text-base font-bold tracking-tight text-primary-800">
+                    {submittedRef}
+                  </p>
+                </div>
+              )}
+
+              {copied && (
+                <p className="mt-1 text-center text-[10px] font-medium text-success-600">
+                  Copied to clipboard
+                </p>
+              )}
+
+              {/* Divider */}
+              <div className="my-3 border-t border-primary-200" />
+
+              {/* Submit Reference Number button */}
               <button
-                onClick={() => {
-                  setSuccess(false);
-                  setSubmittedRef(null);
-                  setForm(resetForm());
-                }}
-                className="btn-outline"
+                type="button"
+                onClick={handleSubmitToSupport}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-primary-600/25 transition-all hover:bg-primary-700 active:scale-[0.98]"
               >
-                Submit Another Application
+                <MessageCircle className="h-4 w-4" />
+                Submit Reference Number
               </button>
+
+              {/* Caption */}
+              <p className="mt-2 text-center text-[11px] leading-snug text-neutral-600">
+                Tap the button above to send your reference number to our live
+                support team. They will locate your application and assist you
+                directly.
+              </p>
+
+              {/* Reminder text */}
+              <p className="mt-2 text-center text-[10px] leading-snug text-neutral-500">
+                Please copy or screenshot your reference number for your records.
+              </p>
             </div>
+
+            {/* Track My Application button */}
+            <button
+              type="button"
+              onClick={() => navigate('tracker')}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-primary-600 bg-white px-4 py-3 text-sm font-bold text-primary-700 transition-all hover:bg-primary-50 active:scale-[0.98]"
+            >
+              Track My Application
+              <ArrowRight className="h-4 w-4" />
+            </button>
+
+            {/* Back Home button */}
+            <button
+              type="button"
+              onClick={() => {
+                setSuccess(false);
+                setSubmittedRef(null);
+                navigate('home');
+              }}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+            >
+              <HomeIconLucide className="h-3.5 w-3.5" />
+              Back to Home
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
+  // ============================================================
+  // APPLICATION FORM
+  // ============================================================
   return (
     <div>
       <PageHeader
