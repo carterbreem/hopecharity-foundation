@@ -22,7 +22,7 @@ const applicantActions: ActionItem[] = [
   { label: 'Generate CCIC', action: 'ccic' },
 ];
 
-const CCIC_URL = 'https://hope-charity-ccic.vercel.app';
+const CCIC_URL = '/ccic/index.html';
 
 export default function Navbar() {
   const route = useRoute();
