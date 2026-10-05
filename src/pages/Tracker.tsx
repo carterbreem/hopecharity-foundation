@@ -17,8 +17,6 @@ import {
   User,
   Bell,
   AlertCircle,
-  ExternalLink,
-  ShieldCheck,
 } from 'lucide-react';
 import { useNavigate } from '../router';
 import { useAuth } from '../context/AuthContext';
@@ -47,8 +45,6 @@ const statusIcons: Record<ApplicationStatus, typeof Clock> = {
   completed: CheckCircle2,
   declined: XCircle,
 };
-
-const CCIC_URL = 'https://hope-charity-ccic.vercel.app';
 
 export default function Tracker() {
   const navigate = useNavigate();
@@ -190,12 +186,10 @@ export default function Tracker() {
     return sum + msgs.filter((m) => m.author_role === 'admin' && !m.read_by_applicant).length;
   }, 0);
 
-  // Applications that have at least one admin message (read or unread)
   const appsWithMessages = applications.filter((app) =>
     (messagesMap[app.id] ?? []).some((m) => m.author_role === 'admin'),
   );
 
-  // Mark all admin messages as read for a given application
   const markMessagesRead = async (appId: string) => {
     await supabase
       .from('application_messages')
@@ -215,7 +209,6 @@ export default function Tracker() {
     });
   };
 
-  // Open message modal from the unread banner
   const handleOpenMessageFromBanner = () => {
     const target = appsWithMessages.find((app) =>
       (messagesMap[app.id] ?? []).some(
@@ -225,11 +218,9 @@ export default function Tracker() {
     if (!target) return;
     setSelectedApp(target);
     setMessagesOpen(true);
-    // Mark as read after opening
     markMessagesRead(target.id);
   };
 
-  // Open modal from a card
   const handleOpenAppModal = (app: Application) => {
     setSelectedApp(app);
     setMessagesOpen(true);
@@ -286,7 +277,6 @@ export default function Tracker() {
         title="Application Tracker"
         subtitle={`Welcome, ${profile?.full_name ?? user.email}. Enter your application reference number below to view your application status.`}
       >
-        {/* Unread messages banner — clickable, opens the message */}
         {unreadCount > 0 && (
           <button
             type="button"
@@ -299,30 +289,8 @@ export default function Tracker() {
         )}
       </PageHeader>
 
-      {/* GENERATE CCIC button */}
-      <section className="bg-white pt-8">
-        <div className="container-max">
-          <div className="flex flex-col items-center">
-            <a
-              href={CCIC_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-full max-w-md items-center justify-center gap-3 rounded-2xl bg-primary-600 px-8 py-6 text-xl font-bold text-white shadow-xl shadow-primary-600/30 transition-all duration-300 hover:bg-primary-700 hover:-translate-y-0.5 hover:shadow-2xl"
-            >
-              <ShieldCheck className="h-7 w-7" />
-              GENERATE CCIC
-              <ExternalLink className="h-5 w-5 opacity-80" />
-            </a>
-            <p className="mt-3 text-center text-sm text-neutral-500">
-              Generate your charity compliance and integrity code
-            </p>
-          </div>
-        </div>
-      </section>
-
       <section className="section-padding bg-white">
         <div className="container-max">
-          {/* Search by reference number */}
           <div className="max-w-2xl">
             <h2 className="text-lg font-bold text-neutral-900">Track by Reference Number</h2>
             <p className="mt-1 text-sm text-neutral-500">
@@ -357,10 +325,8 @@ export default function Tracker() {
               <p className="mt-3 text-sm text-error-600">{searchError}</p>
             )}
 
-            {/* Only show the searched application. Nothing else. */}
             {hasTracked && searchResult && (
               <>
-                {/* Admin message (if any) — displayed before application info */}
                 {(() => {
                   const appMsgs = messagesMap[searchResult.id] ?? [];
                   const adminMsgs = appMsgs.filter((m) => m.author_role === 'admin');
@@ -392,7 +358,6 @@ export default function Tracker() {
                     </p>
                   </div>
 
-                  {/* Applicant name + assistance type — for identity confirmation */}
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div>
                       <p className="text-xs uppercase tracking-wider text-neutral-500">Applicant</p>
@@ -420,7 +385,6 @@ export default function Tracker() {
             )}
           </div>
 
-          {/* My Applications — hidden while a search result is being viewed (so it never leaks other apps) */}
           {hasTracked && !searchResult && (
             <div className="mt-10">
               <div className="flex items-center justify-between">
@@ -460,7 +424,6 @@ export default function Tracker() {
             </div>
           )}
 
-          {/* When a search result is shown, hide other applications entirely */}
           {hasTracked && searchResult && (
             <div className="mt-6 text-center">
               <button
@@ -475,7 +438,6 @@ export default function Tracker() {
         </div>
       </section>
 
-      {/* Application detail modal with messages */}
       {selectedApp && messagesOpen && (
         <ApplicationDetailModal
           application={selectedApp}
