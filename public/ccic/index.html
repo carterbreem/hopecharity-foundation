@@ -428,6 +428,26 @@
 
     document.getElementById('backToHomeFromCongrats').addEventListener('click', () => showPage('home'));
 
+    // ========== TEMP DEBUG BUTTON — REMOVE AFTER FIXING ==========
+    const testBtn = document.createElement('button');
+    testBtn.textContent = 'TEST API';
+    testBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:9999;padding:12px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    testBtn.onclick = async () => {
+      try {
+        const r = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: 'Test', email: 'a@b.com', password: 'x' })
+        });
+        const d = await r.json();
+        alert('Status ' + r.status + '\n\n' + JSON.stringify(d, null, 2));
+      } catch (e) {
+        alert('ERROR: ' + e.message);
+      }
+    };
+    document.body.appendChild(testBtn);
+    // ========== END TEMP DEBUG BUTTON ==========
+
     showPage('home');
   })();
 </script>
