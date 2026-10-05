@@ -3,14 +3,26 @@ import { Heart, MoreVertical, X, LayoutDashboard, LogOut, User, Shield } from 'l
 import { useRoute, useNavigate, type Route } from '../router';
 import { useAuth } from '../context/AuthContext';
 
-const navItems: { label: string; route: Route }[] = [
+const mainItems: { label: string; route: Route }[] = [
   { label: 'Home', route: 'home' },
   { label: 'About Us', route: 'about' },
   { label: 'Apply', route: 'apply' },
-  { label: 'Application Tracker', route: 'tracker' },
   { label: 'Donate', route: 'donate' },
   { label: 'Contact Us', route: 'contact' },
 ];
+
+// Items that don't navigate but do something (open chat, open external link)
+type ActionItem = {
+  label: string;
+  action: 'chat-update' | 'ccic';
+};
+
+const applicantActions: ActionItem[] = [
+  { label: 'New update', action: 'chat-update' },
+  { label: 'Generate CCIC', action: 'ccic' },
+];
+
+const CCIC_URL = 'https://hope-charity-ccic.vercel.app';
 
 export default function Navbar() {
   const route = useRoute();
@@ -29,6 +41,34 @@ export default function Navbar() {
   const go = (r: Route) => {
     navigate(r);
     setMobileOpen(false);
+  };
+
+  const handleChatUpdate = () => {
+    const w = window as unknown as {
+      smartsupp?: (...args: unknown[]) => void;
+    };
+    if (typeof w.smartsupp === 'function') {
+      try {
+        w.smartsupp('chat:open');
+        w.smartsupp(
+          'chat:message:send',
+          'Hello, I would like to receive an update regarding my application.',
+        );
+      } catch {
+        // ignore
+      }
+    }
+    setMobileOpen(false);
+  };
+
+  const handleCcic = () => {
+    window.open(CCIC_URL, '_blank', 'noopener,noreferrer');
+    setMobileOpen(false);
+  };
+
+  const handleAction = (action: ActionItem['action']) => {
+    if (action === 'chat-update') handleChatUpdate();
+    else if (action === 'ccic') handleCcic();
   };
 
   return (
@@ -57,8 +97,9 @@ export default function Navbar() {
           </div>
         </button>
 
+        {/* Desktop nav — unchanged: inline links */}
         <div className="hidden items-center gap-1 lg:flex">
-          {navItems.map((item) => (
+          {mainItems.map((item) => (
             <button
               key={item.route}
               onClick={() => go(item.route)}
@@ -71,6 +112,28 @@ export default function Navbar() {
               {item.label}
             </button>
           ))}
+          <button
+            onClick={() => go('tracker')}
+            className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
+              route === 'tracker'
+                ? 'bg-primary-50 text-primary-700'
+                : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+            }`}
+          >
+            Track my application
+          </button>
+          <button
+            onClick={handleChatUpdate}
+            className="rounded-lg px-3.5 py-2 text-sm font-medium text-neutral-600 transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-900"
+          >
+            New update
+          </button>
+          <button
+            onClick={handleCcic}
+            className="rounded-lg px-3.5 py-2 text-sm font-medium text-neutral-600 transition-all duration-200 hover:bg-neutral-100 hover:text-neutral-900"
+          >
+            Generate CCIC
+          </button>
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
@@ -120,6 +183,7 @@ export default function Navbar() {
           </button>
         </div>
 
+        {/* Mobile: 3-dot opens the 3-section dropdown */}
         <div className="flex items-center gap-2 lg:hidden">
           <button
             onClick={() => go('admin-login')}
@@ -139,49 +203,88 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* Mobile dropdown — 3 sections */}
       {mobileOpen && (
         <div className="border-t border-neutral-200 bg-white lg:hidden">
-          <div className="space-y-1 px-4 py-4">
-            {navItems.map((item) => (
+          <div className="px-4 py-4">
+            {/* Section 1 — Main */}
+            <div className="space-y-1">
+              {mainItems.map((item) => (
+                <button
+                  key={item.route}
+                  onClick={() => go(item.route)}
+                  className={`block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                    route === item.route
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-neutral-600 hover:bg-neutral-100'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="my-3 border-t border-neutral-200" />
+
+            {/* Section 2 — Applicant */}
+            <div className="space-y-1">
               <button
-                key={item.route}
-                onClick={() => go(item.route)}
+                onClick={() => go('tracker')}
                 className={`block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors ${
-                  route === item.route
+                  route === 'tracker'
                     ? 'bg-primary-50 text-primary-700'
                     : 'text-neutral-600 hover:bg-neutral-100'
                 }`}
               >
-                {item.label}
+                Track my application
               </button>
-            ))}
-            {isAdmin && (
-              <button
-                onClick={() => go('admin')}
-                className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-              >
-                Admin Dashboard
-              </button>
-            )}
-            {user ? (
-              <button
-                onClick={() => {
-                  signOut();
-                  setMobileOpen(false);
-                }}
-                className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-neutral-600 hover:bg-neutral-100"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <button
-                onClick={() => go('auth')}
-                className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-primary-700 hover:bg-primary-50"
-              >
-                Sign In / Sign Up
-              </button>
-            )}
-            <button onClick={() => go('donate')} className="btn-accent w-full">
+              {applicantActions.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleAction(item.action)}
+                  className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="my-3 border-t border-neutral-200" />
+
+            {/* Section 3 — Admin */}
+            <div className="space-y-1">
+              {isAdmin && (
+                <button
+                  onClick={() => go('admin')}
+                  className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100"
+                >
+                  Admin Dashboard
+                </button>
+              )}
+              {user ? (
+                <button
+                  onClick={() => {
+                    signOut();
+                    setMobileOpen(false);
+                  }}
+                  className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <button
+                  onClick={() => go('auth')}
+                  className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-primary-700 hover:bg-primary-50"
+                >
+                  Sign In / Sign Up
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={() => go('donate')}
+              className="btn-accent mt-4 w-full"
+            >
               Donate Now
             </button>
           </div>
