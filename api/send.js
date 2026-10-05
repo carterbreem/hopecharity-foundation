@@ -9,8 +9,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
-  const token = process.env.TELEGRAM_TOKEN;
-  const chatId = process.env.CHAT_ID;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
     return res.status(500).json({ error: 'Server not configured' });
